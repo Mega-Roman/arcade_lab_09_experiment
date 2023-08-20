@@ -111,9 +111,9 @@ class MainGame(arcade.Window):
         self.scene.add_sprite_list(f"Worms", sprite_list=self.worms)
 
     def on_draw(self):
-        arcade.start_render()
-        self.menu.draw()
+        self.clear()
         self.scene.draw()
+        self.menu.draw()
 
     def update(self, deltatime):
         if not self.menu.shown:
