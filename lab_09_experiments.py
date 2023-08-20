@@ -76,7 +76,9 @@ class MainGame(arcade.Window):
         self.player_sprite.center_x = 500
         self.player_sprite.center_y = 100
 
+        self.attacking = False
         self.worm_list = arcade.SpriteList()
+        self.attack_list = arcade.SpriteList()
 
         for i in range(10):
             worm = arcade.load_animated_gif("Worm.gif")
@@ -92,6 +94,7 @@ class MainGame(arcade.Window):
         # if not self.menu:
         self.player_list.draw()
         self.worm_list.draw()
+        self.attack_list.draw()
 
     def worm_move(self, worms):
         for worm in worms:
@@ -121,6 +124,19 @@ class MainGame(arcade.Window):
         if not self.menu:
             self.player_list.update()
             self.worm_move(self.worm_list)
+            for attack in self.attack_list:
+                self.attack_frame += 0.12
+                attack.update_animation(delta_time=1/100)
+                if self.attack_frame >= 10:
+                    self.attacking = False
+                    attack.kill()
+
+            if self.attacking:
+                worm_hit_list = arcade.check_for_collision_with_list(self.attack, self.worm_list)
+                for worm in worm_hit_list:
+                    worm.kill()
+
+
 
 
 
@@ -144,6 +160,29 @@ class MainGame(arcade.Window):
             elif key == arcade.key.D:
                 self.player_sprite.change_x = 3
                 self.player_sprite.angle = 270
+
+            if key == arcade.key.SPACE:
+                if not self.attacking:
+                    self.attacking = True
+                    self.attack = arcade.load_animated_gif('Attack.gif')
+                    self.attack_list.append(self.attack)
+                    self.attack_frame = 1
+
+                    if self.player_sprite.angle == 0:
+                        self.attack.center_x = self.player_sprite.center_x
+                        self.attack.center_y = self.player_sprite.center_y + 60
+
+                    elif self.player_sprite.angle == 90:
+                        self.attack.center_x = self.player_sprite.center_x - 60
+                        self.attack.center_y = self.player_sprite.center_y
+
+                    elif self.player_sprite.angle == 180:
+                        self.attack.center_x = self.player_sprite.center_x
+                        self.attack.center_y = self.player_sprite.center_y - 60
+
+                    elif self.player_sprite.angle == 270:
+                        self.attack.center_x = self.player_sprite.center_x + 60
+                        self.attack.center_y = self.player_sprite.center_y
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.W or key == arcade.key.S:
