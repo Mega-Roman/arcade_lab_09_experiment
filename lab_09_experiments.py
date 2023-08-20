@@ -1,4 +1,6 @@
+from typing import Optional
 import arcade
+from arcade import Texture
 import arcade.gui
 import random
 
@@ -18,8 +20,21 @@ class Player(arcade.Sprite):
 
 
 class Worm(arcade.AnimatedTimeBasedSprite):
+    def __new__(cls):
+        self = arcade.load_animated_gif("Worm.gif")
+        self.__class__ = cls
+        self.__init__()
+        return self
+
+    def __init__(self):
+        self.center_x = random.randrange(1, 1000)
+        self.center_y = random.randrange(1, 1000)
+
     def update(self):
-        self.update_animation(delta_time=1 / 240)
+        # self.update_animation(delta_time=1 / 240)
+        self.update_animation(delta_time=1 / 200)
+        self.center_x += random.randint(-1, 1)
+        self.center_y += random.randint(-1, 1)
 
 
 class Menu:
@@ -76,76 +91,46 @@ class MainGame(arcade.Window):
     def __init__(self):
         super().__init__(1000, 1000, title="My Super Game", resizable=True)
         arcade.set_background_color(arcade.color.YELLOW)
-
+        self.scene = None
         self.menu = Menu()
 
     def setup(self):
-        self.player_list = arcade.SpriteList()
-        self.player_sprite = Player("Mole.png", 0.25)
-        self.player_list.append(self.player_sprite)
-        self.player_sprite.center_x = 500
-        self.player_sprite.center_y = 100
+        NUMBER_OF_WORMS = 10
 
-        self.attacking = False
-        self.worm_list = arcade.SpriteList()
-        self.attack_list = arcade.SpriteList()
+        self.scene = arcade.Scene()
 
-        for i in range(10):
-            worm = arcade.load_animated_gif("Worm.gif")
-            self.worm_list.append(worm)
-            worm.center_x = random.randrange(1, 1000)
-            worm.center_y = random.randrange(1, 1000)
+        self.player_sprite = Player("Mole.png", 0.25, center_x=500, center_y=100)
+        self.scene.add_sprite("Player", self.player_sprite)
+
+        self.attack = arcade.load_animated_gif("Attack.gif")
+
+        self.worms = arcade.SpriteList()
+        for i in range(NUMBER_OF_WORMS):
+            self.worms.append(Worm())
+
+        self.scene.add_sprite_list(f"Worms", sprite_list=self.worms)
 
     def on_draw(self):
         arcade.start_render()
         self.menu.draw()
-
-        # if not self.menu:
-        self.player_list.draw()
-        self.worm_list.draw()
-        self.attack_list.draw()
-
-    def worm_move(self, worms):
-        for worm in worms:
-            worm.update_animation(delta_time=1 / 200)
-            # e = random.randint(0, 1)
-            # print(e)
-            move_right = random.randint(0, 1)
-            move_up = random.randint(0, 1)
-
-            if move_right == True:
-                # print('+1')
-                worm.center_x += 1
-
-            elif move_right == False:
-                # print('-1')
-                worm.center_x -= 1
-
-            if move_up == True:
-                # print('+1')
-                worm.center_y += 1
-
-            elif move_up == False:
-                # print('-1')
-                worm.center_y -= 1
+        self.scene.draw()
 
     def update(self, deltatime):
         if not self.menu.shown:
-            self.player_list.update()
-            self.worm_move(self.worm_list)
-            for attack in self.attack_list:
-                self.attack_frame += 0.12
-                attack.update_animation(delta_time=1 / 100)
-                if self.attack_frame >= 10:
-                    self.attacking = False
-                    attack.kill()
+            self.scene.update()
 
-            if self.attacking:
+            if self.attack.sprite_lists:
+                # sometimes fails with TypeError: '<=' not supported between instances of 'NoneType' and 'float'!
                 worm_hit_list = arcade.check_for_collision_with_list(
-                    self.attack, self.worm_list
+                    self.attack, self.worms
                 )
                 for worm in worm_hit_list:
                     worm.kill()
+
+                self.attack.update_animation(delta_time=1 / 100)
+                if self.attack.cur_frame_idx > 8:
+                    self.attack.cur_frame_idx = 0
+                    self.attack.kill()
 
     def on_key_press(self, key, modifiers):
         if self.menu.shown:
@@ -171,12 +156,7 @@ class MainGame(arcade.Window):
             self.player_sprite.angle = 270
 
         if key == arcade.key.SPACE:
-            if not self.attacking:
-                self.attacking = True
-                self.attack = arcade.load_animated_gif("Attack.gif")
-                self.attack_list.append(self.attack)
-                self.attack_frame = 1
-
+            if not self.attack.sprite_lists:
                 if self.player_sprite.angle == 0:
                     self.attack.center_x = self.player_sprite.center_x
                     self.attack.center_y = self.player_sprite.center_y + 60
@@ -192,6 +172,8 @@ class MainGame(arcade.Window):
                 elif self.player_sprite.angle == 270:
                     self.attack.center_x = self.player_sprite.center_x + 60
                     self.attack.center_y = self.player_sprite.center_y
+
+                self.scene.add_sprite("Attack", self.attack)
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.W or key == arcade.key.S:
