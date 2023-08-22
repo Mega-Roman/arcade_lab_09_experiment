@@ -6,9 +6,10 @@ import random
 
 
 class Player(arcade.Sprite):
-    def update(self):
-        self.center_x += self.change_x
-        self.center_y += self.change_y
+    def on_update(self, deltatime):
+        self.center_x += self.change_x * deltatime
+        self.center_y += self.change_y * deltatime
+
         if self.left < 0:
             self.left = 0
         elif self.right > 1000 - 1:
@@ -30,9 +31,9 @@ class Worm(arcade.AnimatedTimeBasedSprite):
         self.center_x = random.randrange(1, 1000)
         self.center_y = random.randrange(1, 1000)
 
-    def update(self):
+    def on_update(self, deltatime):
         # self.update_animation(delta_time=1 / 240)
-        self.update_animation(delta_time=1 / 200)
+        self.update_animation(deltatime)
         self.center_x += random.randint(-1, 1)
         self.center_y += random.randint(-1, 1)
 
@@ -117,7 +118,7 @@ class MainGame(arcade.Window):
 
     def update(self, deltatime):
         if not self.menu.shown:
-            self.scene.update()
+            self.scene.on_update(deltatime)
 
             if self.attack.sprite_lists:
                 # sometimes fails with TypeError: '<=' not supported between instances of 'NoneType' and 'float'!
@@ -127,7 +128,7 @@ class MainGame(arcade.Window):
                 for worm in worm_hit_list:
                     worm.kill()
 
-                self.attack.update_animation(delta_time=1 / 100)
+                self.attack.update_animation(deltatime)
                 if self.attack.cur_frame_idx > 8:
                     self.attack.cur_frame_idx = 0
                     self.attack.kill()
@@ -140,19 +141,19 @@ class MainGame(arcade.Window):
             self.menu.show()
 
         if key == arcade.key.W:
-            self.player_sprite.change_y = 3
+            self.player_sprite.change_y = 300
             self.player_sprite.angle = 0
 
         elif key == arcade.key.S:
-            self.player_sprite.change_y = -3
+            self.player_sprite.change_y = -300
             self.player_sprite.angle = 180
 
         elif key == arcade.key.A:
-            self.player_sprite.change_x = -3
+            self.player_sprite.change_x = -300
             self.player_sprite.angle = 90
 
         elif key == arcade.key.D:
-            self.player_sprite.change_x = 3
+            self.player_sprite.change_x = 300
             self.player_sprite.angle = 270
 
         if key == arcade.key.SPACE:
