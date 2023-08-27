@@ -19,7 +19,21 @@ class Player(arcade.Sprite):
         elif self.top > 1000 - 1:
             self.top = 1000 - 1
 
+    def move_up(self):
+        self.change_y = 300
+        self.angle = 0
 
+    def move_down(self):
+        self.change_y = -300
+        self.angle = 180
+
+    def move_right(self):
+        self.change_x = 300
+        self.angle = 270
+
+    def move_left(self):
+        self.change_x = -300
+        self.angle = 90
 class Worm(arcade.AnimatedTimeBasedSprite):
     def __new__(cls):
         self = arcade.load_animated_gif("Worm.gif")
@@ -141,23 +155,20 @@ class MainGame(arcade.Window):
             self.menu.show()
 
         if key == arcade.key.W:
-            self.player_sprite.change_y = 300
-            self.player_sprite.angle = 0
+            self.player_sprite.move_up()
 
         elif key == arcade.key.S:
-            self.player_sprite.change_y = -300
-            self.player_sprite.angle = 180
+            self.player_sprite.move_down()
 
         elif key == arcade.key.A:
-            self.player_sprite.change_x = -300
-            self.player_sprite.angle = 90
+            self.player_sprite.move_left()
 
         elif key == arcade.key.D:
-            self.player_sprite.change_x = 300
-            self.player_sprite.angle = 270
+            self.player_sprite.move_right()
+
 
         if key == arcade.key.SPACE:
-            if not self.attack.sprite_lists:
+            if not self.attack:
                 if self.player_sprite.angle == 0:
                     self.attack.center_x = self.player_sprite.center_x
                     self.attack.center_y = self.player_sprite.center_y + 60
