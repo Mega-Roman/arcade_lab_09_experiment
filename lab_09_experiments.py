@@ -34,6 +34,27 @@ class Player(arcade.Sprite):
     def move_left(self):
         self.change_x = -300
         self.angle = 90
+
+    def attack(self):
+        if not game.attack.sprite_lists:
+            if self.angle == 0:
+                game.attack.center_x = self.center_x
+                game.attack.center_y = self.center_y + 60
+
+            elif self.angle == 90:
+                game.attack.center_x = self.center_x - 60
+                game.attack.center_y = self.center_y
+
+            elif self.angle == 180:
+                game.attack.center_x = self.center_x
+                game.attack.center_y = self.center_y - 60
+
+            elif self.angle == 270:
+                game.attack.center_x = self.center_x + 60
+                game.attack.center_y = self.center_y
+
+            game.scene.add_sprite("Attack", game.attack)
+
 class Worm(arcade.AnimatedTimeBasedSprite):
     def __new__(cls):
         self = arcade.load_animated_gif("Worm.gif")
@@ -168,24 +189,7 @@ class MainGame(arcade.Window):
 
 
         if key == arcade.key.SPACE:
-            if not self.attack:
-                if self.player_sprite.angle == 0:
-                    self.attack.center_x = self.player_sprite.center_x
-                    self.attack.center_y = self.player_sprite.center_y + 60
-
-                elif self.player_sprite.angle == 90:
-                    self.attack.center_x = self.player_sprite.center_x - 60
-                    self.attack.center_y = self.player_sprite.center_y
-
-                elif self.player_sprite.angle == 180:
-                    self.attack.center_x = self.player_sprite.center_x
-                    self.attack.center_y = self.player_sprite.center_y - 60
-
-                elif self.player_sprite.angle == 270:
-                    self.attack.center_x = self.player_sprite.center_x + 60
-                    self.attack.center_y = self.player_sprite.center_y
-
-                self.scene.add_sprite("Attack", self.attack)
+            self.player_sprite.attack()
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.W or key == arcade.key.S:
