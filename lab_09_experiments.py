@@ -131,7 +131,8 @@ class MainGame(arcade.Window):
         self.menu = Menu()
 
     def setup(self):
-        NUMBER_OF_WORMS = 10
+        NUMBER_OF_WORMS = 100
+        self.worms_killed = 0
 
         self.scene = arcade.Scene()
 
@@ -139,6 +140,9 @@ class MainGame(arcade.Window):
         self.scene.add_sprite("Player", self.player_sprite)
 
         self.attack = arcade.load_animated_gif("Attack.gif")
+
+        self.worm_counter = arcade.Sprite("Worm.png", 0.25, center_x=50, center_y=950)
+        self.scene.add_sprite("Counter", self.worm_counter)
 
         self.worms = arcade.SpriteList()
         for i in range(NUMBER_OF_WORMS):
@@ -150,6 +154,8 @@ class MainGame(arcade.Window):
         self.clear()
         self.scene.draw()
         self.menu.draw()
+        message = ":" + str(self.worms_killed)
+        arcade.draw_text(message, 75, 935, arcade.color.BLACK, 30)
 
     def update(self, deltatime):
         if not self.menu.shown:
@@ -162,6 +168,7 @@ class MainGame(arcade.Window):
                 )
                 for worm in worm_hit_list:
                     worm.kill()
+                    self.worms_killed += 1
 
                 self.attack.update_animation(deltatime)
                 if self.attack.cur_frame_idx > 8:
