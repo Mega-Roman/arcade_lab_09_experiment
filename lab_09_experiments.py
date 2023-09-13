@@ -10,29 +10,20 @@ class Player(arcade.Sprite):
         self.center_x += self.change_x * deltatime
         self.center_y += self.change_y * deltatime
 
-        if self.left < 0:
-            self.left = 0
-        elif self.right > 1000 - 1:
-            self.right = 1000 - 1
-        if self.bottom < 0:
-            self.bottom = 0
-        elif self.top > 1000 - 1:
-            self.top = 1000 - 1
-
     def move_up(self):
-        self.change_y = 300
+        self.change_y = game.player_speed
         self.angle = 0
 
     def move_down(self):
-        self.change_y = -300
+        self.change_y = -game.player_speed
         self.angle = 180
 
     def move_right(self):
-        self.change_x = 300
+        self.change_x = game.player_speed
         self.angle = 270
 
     def move_left(self):
-        self.change_x = -300
+        self.change_x = -game.player_speed
         self.angle = 90
 
     def attack(self):
@@ -54,6 +45,11 @@ class Player(arcade.Sprite):
                 game.attack.center_y = self.center_y
 
             game.scene.add_sprite("Attack", game.attack)
+
+class Worm_Counter(arcade.Sprite):
+    def on_update(self, deltatime):
+        self.center_x = game.player_sprite.center_x - 450
+        self.center_y = game.player_sprite.center_y + 430
 
 class Worm(arcade.AnimatedTimeBasedSprite):
     def __new__(cls):
@@ -133,15 +129,25 @@ class MainGame(arcade.Window):
     def setup(self):
         NUMBER_OF_WORMS = 100
         self.worms_killed = 0
+        self.in_base = True
+        self.player_speed = 300
+        self.speed_cost = 10
+        self.worm_receipt = "Not Enough Worms!!!"
+        self.show_worm_receipt = False
 
         self.scene = arcade.Scene()
 
-        self.player_sprite = Player("Mole.png", 0.25, center_x=500, center_y=100)
+        self.camera = arcade.Camera(1000, 1000)
+
+        self.base = arcade.Sprite("Base.png", 0.75, center_x=500, center_y=500)
+        self.scene.add_sprite("Base", self.base)
+
+        self.player_sprite = Player("Mole.png", 0.25, center_x=500, center_y=500)
         self.scene.add_sprite("Player", self.player_sprite)
 
         self.attack = arcade.load_animated_gif("Attack.gif")
 
-        self.worm_counter = arcade.Sprite("Worm.png", 0.25, center_x=50, center_y=950)
+        self.worm_counter = Worm_Counter("Worm.png", 0.25)
         self.scene.add_sprite("Counter", self.worm_counter)
 
         self.worms = arcade.SpriteList()
@@ -151,15 +157,28 @@ class MainGame(arcade.Window):
         self.scene.add_sprite_list(f"Worms", sprite_list=self.worms)
 
     def on_draw(self):
+        self.camera.use()
         self.clear()
         self.scene.draw()
         self.menu.draw()
         message = ":" + str(self.worms_killed)
-        arcade.draw_text(message, 75, 935, arcade.color.BLACK, 30)
+        arcade.draw_text(message, self.player_sprite.center_x - 435, self.player_sprite.center_y + 422, arcade.color.BLACK, 30)
+
+        if self.in_base:
+            arcade.draw_text("Upgrade cost: " + str(self.speed_cost), 375, 350, arcade.color.BLACK, 25)
+            if self.show_worm_receipt:
+                arcade.draw_text(self.worm_receipt, 600, 500, arcade.color.BLACK, 30)
 
     def update(self, deltatime):
+        self.camera.update()
+        self.camera.move((self.player_sprite.center_x - 500, self.player_sprite.center_y - 500))
         if not self.menu.shown:
             self.scene.on_update(deltatime)
+
+            self.in_base = arcade.check_for_collision(self.player_sprite, self.base)
+
+            if not self.in_base:
+                self.show_worm_receipt = False
 
             if self.attack.sprite_lists:
                 # sometimes fails with TypeError: '<=' not supported between instances of 'NoneType' and 'float'!
@@ -182,6 +201,7 @@ class MainGame(arcade.Window):
         if key == arcade.key.ESCAPE:
             self.menu.show()
 
+
         if key == arcade.key.W:
             self.player_sprite.move_up()
 
@@ -197,6 +217,18 @@ class MainGame(arcade.Window):
 
         if key == arcade.key.SPACE:
             self.player_sprite.attack()
+
+        if self.in_base:
+            if key == arcade.key.KEY_1:
+                self.show_worm_receipt = True
+                if self.worms_killed >= self.speed_cost:
+                    print('+1 speed!')
+                    self.worm_receipt = "+1 Speed"
+                    self.worms_killed -= self.speed_cost
+                    self.player_speed += 25
+                    self.speed_cost = int(self.speed_cost * 1.5)
+                else:
+                    self.worm_receipt = "Not Enough Worms!!!"
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.W or key == arcade.key.S:
